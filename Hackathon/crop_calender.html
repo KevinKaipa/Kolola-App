@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kolola - Crop Calendar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #28a745;
+            --secondary-color: #218838;
+            --dark-color: #343a40;
+            --light-color: #f8f9fa;
+            --sidebar-width: 250px;
+            --header-height: 70px;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--dark-color);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            padding-top: var(--header-height);
+            overflow-y: auto;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar-menu li {
+            padding: 10px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .sidebar-menu li a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+        
+        .sidebar-menu li a:hover {
+            color: white;
+        }
+        
+        .sidebar-menu li a i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .sidebar-menu li.active {
+            background-color: rgba(255,255,255,0.1);
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        /* Main Content Styles */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 20px;
+            padding-top: calc(var(--header-height) + 20px);
+        }
+        
+        /* Header Styles */
+        .app-header {
+            height: var(--header-height);
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+        }
+        
+        .app-header .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--dark-color);
+            margin-right: 30px;
+        }
+        
+        .app-header .navbar-brand span {
+            color: var(--primary-color);
+        }
+        
+        .header-search {
+            flex: 1;
+            max-width: 500px;
+        }
+        
+        .header-actions {
+            display: flex;
+            align-items: center;
+        }
+        
+        /* Calendar Page Styles */
+        .calendar-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 25px;
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .calendar-title {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .calendar-year-nav {
+            display: flex;
+            align-items: center;
+        }
+        
+        .calendar-year {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0 15px;
+        }
+        
+        .months-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        
+        .month-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .month-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .month-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background-color: #dee2e6;
+        }
+        
+        .day-header {
+            background-color: #f8f9fa;
+            text-align: center;
+            padding: 5px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .day-cell {
+            background-color: white;
+            min-height: 40px;
+            padding: 3px;
+            font-size: 0.8rem;
+        }
+        
+        .day-cell.empty {
+            background-color: #f8f9fa;
+        }
+        
+        .day-cell.today {
+            background-color: rgba(40, 167, 69, 0.1);
+            font-weight: 600;
+        }
+        
+        .calendar-event {
+            background-color: #e9ecef;
+            border-radius: 3px;
+            padding: 1px 3px;
+            margin-bottom: 2px;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .calendar-event.planting {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+        
+        .calendar-event.harvest {
+            background-color: #fff3cd;
+            color: #664d03;
+        }
+        
+        .calendar-event.maintenance {
+            background-color: #cfe2ff;
+            color: #084298;
+        }
+        
+        .calendar-legend {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+        
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+            margin-right: 5px;
+        }
+        
+        /* Responsive Adjustments */
+        @media (max-width: 1200px) {
+            .months-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .months-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                width: 70px;
+                overflow: hidden;
+            }
+            
+            .sidebar-menu li span {
+                display: none;
+            }
+            
+            .sidebar-menu li i {
+                margin-right: 0;
+                font-size: 1.5rem;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <a class="navbar-brand" href="#">Kol<span>ola</span></a>
+        <div class="header-search">
+            <input type="text" class="form-control form-control-sm" placeholder="Search...">
+        </div>
+        <div class="header-actions ms-auto">
+            <button class="btn btn-sm btn-outline-secondary me-2">Help</button>
+            <div class="dropdown">
+                <button class="btn btn-sm btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="bi bi-person-circle me-1"></i> User
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#">Profile</a></li>
+                    <li><a class="dropdown-item" href="#">Settings</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <ul class="sidebar-menu">
+            <li>
+                <a href="dashboard.html">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="inventory.html">
+                    <i class="bi bi-box-seam"></i>
+                    <span>Inventory</span>
+                </a>
+            </li>
+            <li>
+                <a href="financial.html">
+                    <i class="bi bi-cash-stack"></i>
+                    <span>Financial</span>
+                </a>
+            </li>
+            <li>
+                <a href="workforce.html">
+                    <i class="bi bi-people"></i>
+                    <span>Workforce</span>
+                </a>
+            </li>
+            <li>
+                <a href="marketplace.html">
+                    <i class="bi bi-shop"></i>
+                    <span>Marketplace</span>
+                </a>
+            </li>
+            <li>
+                <a href="precision.html">
+                    <i class="bi bi-gear"></i>
+                    <span>Precision Farming</span>
+                </a>
+            </li>
+            <li class="active">
+                <a href="calendar.html">
+                    <i class="bi bi-calendar-date"></i>
+                    <span>Crop Calendar</span>
+                </a>
+            </li>
+            <li>
+                <a href="consultation.html">
+                    <i class="bi bi-chat-dots"></i>
+                    <span>Consultation</span>
+                </a>
+            </li>
+            <li>
+                <a href="reports.html">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span>Reports</span>
+                </a>
+            </li>
+            <li>
+                <a href="settings.html">
+                    <i class="bi bi-sliders"></i>
+                    <span>Settings</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="calendar-container">
+            <div class="calendar-header">
+                <h2 class="calendar-title">Crop Calendar 2025</h2>
+                <div class="calendar-year-nav">
+                    <button class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <div class="calendar-year">2025</div>
+                    <button class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-success me-2">
+                        <i class="bi bi-plus"></i> Add Event
+                    </button>
+                    <button class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-printer"></i> Print
+                    </button>
+                </div>
+            </div>
+            
+            <div class="months-grid">
+                <!-- January -->
+                <div class="month-card">
+                    <div class="month-header">January</div>
+                    <div class="month-days">
+                        <div class="day-header">Sun</div>
+                        <div class="day-header">Mon</div>
+                        <div class="day-header">Tue</div>
+                        <div class="day-header">Wed</div>
+                        <div class="day-header">Thu</div>
+                        <div class="day-header">Fri</div>
+                        <div class="day-header">Sat</div>
+                        
+                        <!-- Empty days before the 1st -->
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell">1</div>
+                        <div class="day-cell">2</div>
+                        <div class="day-cell">3</div>
+                        <div class="day-cell">4</div>
+                        
+                        <div class="day-cell">5</div>
+                        <div class="day-cell">6</div>
+                        <div class="day-cell">7</div>
+                        <div class="day-cell">8</div>
+                        <div class="day-cell">9</div>
+                        <div class="day-cell">10</div>
+                        <div class="day-cell">11</div>
+                        
+                        <div class="day-cell">12</div>
+                        <div class="day-cell">13</div>
+                        <div class="day-cell">14</div>
+                        <div class="day-cell">15</div>
+                        <div class="day-cell">16</div>
+                        <div class="day-cell">17</div>
+                        <div class="day-cell">18</div>
+                        
+                        <div class="day-cell">19</div>
+                        <div class="day-cell">20</div>
+                        <div class="day-cell">21</div>
+                        <div class="day-cell">22</div>
+                        <div class="day-cell">23</div>
+                        <div class="day-cell">24</div>
+                        <div class="day-cell">25</div>
+                        
+                        <div class="day-cell">26</div>
+                        <div class="day-cell">27</div>
+                        <div class="day-cell">28</div>
+                        <div class="day-cell">29</div>
+                        <div class="day-cell">30</div>
+                        <div class="day-cell">31</div>
+                        <div class="day-cell empty"></div>
+                    </div>
+                </div>
+                
+                <!-- February -->
+                <div class="month-card">
+                    <div class="month-header">February</div>
+                    <div class="month-days">
+                        <div class="day-header">Sun</div>
+                        <div class="day-header">Mon</div>
+                        <div class="day-header">Tue</div>
+                        <div class="day-header">Wed</div>
+                        <div class="day-header">Thu</div>
+                        <div class="day-header">Fri</div>
+                        <div class="day-header">Sat</div>
+                        
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell">1</div>
+                        <div class="day-cell">2</div>
+                        
+                        <div class="day-cell">3</div>
+                        <div class="day-cell">4</div>
+                        <div class="day-cell">5</div>
+                        <div class="day-cell">6</div>
+                        <div class="day-cell">7</div>
+                        <div class="day-cell">8</div>
+                        <div class="day-cell">9</div>
+                        
+                        <div class="day-cell">10</div>
+                        <div class="day-cell">11</div>
+                        <div class="day-cell">12</div>
+                        <div class="day-cell">13</div>
+                        <div class="day-cell">14</div>
+                        <div class="day-cell">15</div>
+                        <div class="day-cell">16</div>
+                        
+                        <div class="day-cell">17</div>
+                        <div class="day-cell">18</div>
+                        <div class="day-cell">19</div>
+                        <div class="day-cell">20</div>
+                        <div class="day-cell">21</div>
+                        <div class="day-cell">22</div>
+                        <div class="day-cell">23</div>
+                        
+                        <div class="day-cell">24</div>
+                        <div class="day-cell">25</div>
+                        <div class="day-cell">26</div>
+                        <div class="day-cell">27</div>
+                        <div class="day-cell">28</div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                    </div>
+                </div>
+                
+                <!-- March -->
+                <div class="month-card">
+                    <div class="month-header">March</div>
+                    <div class="month-days">
+                        <div class="day-header">Sun</div>
+                        <div class="day-header">Mon</div>
+                        <div class="day-header">Tue</div>
+                        <div class="day-header">Wed</div>
+                        <div class="day-header">Thu</div>
+                        <div class="day-header">Fri</div>
+                        <div class="day-header">Sat</div>
+                        
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell">1</div>
+                        <div class="day-cell">2</div>
+                        
+                        <div class="day-cell">3</div>
+                        <div class="day-cell">4</div>
+                        <div class="day-cell">5</div>
+                        <div class="day-cell">6</div>
+                        <div class="day-cell">7</div>
+                        <div class="day-cell">8</div>
+                        <div class="day-cell">9</div>
+                        
+                        <div class="day-cell">10</div>
+                        <div class="day-cell">11</div>
+                        <div class="day-cell">12</div>
+                        <div class="day-cell">13</div>
+                        <div class="day-cell">14</div>
+                        <div class="day-cell">15</div>
+                        <div class="day-cell">16</div>
+                        
+                        <div class="day-cell">17</div>
+                        <div class="day-cell">18</div>
+                        <div class="day-cell">19</div>
+                        <div class="day-cell">20</div>
+                        <div class="day-cell">21</div>
+                        <div class="day-cell">22</div>
+                        <div class="day-cell">23</div>
+                        
+                        <div class="day-cell">24</div>
+                        <div class="day-cell">25</div>
+                        <div class="day-cell">26</div>
+                        <div class="day-cell">27</div>
+                        <div class="day-cell">28</div>
+                        <div class="day-cell">29</div>
+                        <div class="day-cell">30</div>
+                        
+                        <div class="day-cell">31</div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                    </div>
+                </div>
+                
+                <!-- April -->
+                <div class="month-card">
+                    <div class="month-header">April</div>
+                    <div class="month-days">
+                        <div class="day-header">Sun</div>
+                        <div class="day-header">Mon</div>
+                        <div class="day-header">Tue</div>
+                        <div class="day-header">Wed</div>
+                        <div class="day-header">Thu</div>
+                        <div class="day-header">Fri</div>
+                        <div class="day-header">Sat</div>
+                        
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell">1</div>
+                        
+                        <div class="day-cell">2</div>
+                        <div class="day-cell">3</div>
+                        <div class="day-cell">4</div>
+                        <div class="day-cell">5</div>
+                        <div class="day-cell">6</div>
+                        <div class="day-cell">7</div>
+                        <div class="day-cell">8</div>
+                        
+                        <div class="day-cell">9</div>
+                        <div class="day-cell">10</div>
+                        <div class="day-cell">11</div>
+                        <div class="day-cell">12</div>
+                        <div class="day-cell">13</div>
+                        <div class="day-cell">14</div>
+                        <div class="day-cell">15</div>
+                        
+                        <div class="day-cell">16</div>
+                        <div class="day-cell">17</div>
+                        <div class="day-cell">18</div>
+                        <div class="day-cell">19</div>
+                        <div class="day-cell">20</div>
+                        <div class="day-cell">21</div>
+                        <div class="day-cell">22</div>
+                        
+                        <div class="day-cell">23</div>
+                        <div class="day-cell">24</div>
+                        <div class="day-cell">25</div>
+                        <div class="day-cell">26</div>
+                        <div class="day-cell">27</div>
+                        <div class="day-cell">28</div>
+                        <div class="day-cell">29</div>
+                        
+                        <div class="day-cell">30</div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                    </div>
+                </div>
+                
+                <!-- May -->
+                <div class="month-card">
+                    <div class="month-header">May</div>
+                    <div class="month-days">
+                        <div class="day-header">Sun</div>
+                        <div class="day-header">Mon</div>
+                        <div class="day-header">Tue</div>
+                        <div class="day-header">Wed</div>
+                        <div class="day-header">Thu</div>
+                        <div class="day-header">Fri</div>
+                        <div class="day-header">Sat</div>
+                        
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell">1</div>
+                        <div class="day-cell">2</div>
+                        
+                        <div class="day-cell">3</div>
+                        <div class="day-cell">4</div>
+                        <div class="day-cell">5</div>
+                        <div class="day-cell">6</div>
+                        <div class="day-cell">7</div>
+                        <div class="day-cell">8</div>
+                        <div class="day-cell">9</div>
+                        
+                        <div class="day-cell">10</div>
+                        <div class="day-cell">11</div>
+                        <div class="day-cell">12</div>
+                        <div class="day-cell">13</div>
+                        <div class="day-cell">14</div>
+                        <div class="day-cell today">
+                            15
+                            <div class="calendar-event harvest">Harvest Maize</div>
+                        </div>
+                        <div class="day-cell">16</div>
+                        
+                        <div class="day-cell">17</div>
+                        <div class="day-cell">18</div>
+                        <div class="day-cell">19</div>
+                        <div class="day-cell">20</div>
+                        <div class="day-cell">21</div>
+                        <div class="day-cell">22</div>
+                        <div class="day-cell">23</div>
+                        
+                        <div class="day-cell">24</div>
+                        <div class="day-cell">25</div>
+                        <div class="day-cell">26</div>
+                        <div class="day-cell">27</div>
+                        <div class="day-cell">28</div>
+                        <div class="day-cell">29</div>
+                        <div class="day-cell">30</div>
+                        
+                        <div class="day-cell">31</div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                    </div>
+                </div>
+                
+                <!-- June -->
+                <div class="month-card">
+                    <div class="month-header">June</div>
+                    <div class="month-days">
+                        <div class="day-header">Sun</div>
+                        <div class="day-header">Mon</div>
+                        <div class="day-header">Tue</div>
+                        <div class="day-header">Wed</div>
+                        <div class="day-header">Thu</div>
+                        <div class="day-header">Fri</div>
+                        <div class="day-header">Sat</div>
+                        
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell">1</div>
+                        <div class="day-cell">2</div>
+                        <div class="day-cell">3</div>
+                        
+                        <div class="day-cell">4</div>
+                        <div class="day-cell">5</div>
+                        <div class="day-cell">6</div>
+                        <div class="day-cell">7</div>
+                        <div class="day-cell">8</div>
+                        <div class="day-cell">9</div>
+                        <div class="day-cell">10</div>
+                        
+                        <div class="day-cell">11</div>
+                        <div class="day-cell">12</div>
+                        <div class="day-cell">13</div>
+                        <div class="day-cell">14</div>
+                        <div class="day-cell">15</div>
+                        <div class="day-cell">16</div>
+                        <div class="day-cell">17</div>
+                        
+                        <div class="day-cell">18</div>
+                        <div class="day-cell">19</div>
+                        <div class="day-cell">20</div>
+                        <div class="day-cell">21</div>
+                        <div class="day-cell">22</div>
+                        <div class="day-cell">23</div>
+                        <div class="day-cell">24</div>
+                        
+                        <div class="day-cell">25</div>
+                        <div class="day-cell">26</div>
+                        <div class="day-cell">27</div>
+                        <div class="day-cell">28</div>
+                        <div class="day-cell">29</div>
+                        <div class="day-cell">30</div>
+                        <div class="day-cell empty"></div>
+                    </div>
+                </div>
+                
+                <!-- July -->
+                <div class="month-card">
+                    <div class="month-header">July</div>
+                    <div class="month-days">
+                        <div class="day-header">Sun</div>
+                        <div class="day-header">Mon</div>
+                        <div class="day-header">Tue</div>
+                        <div class="day-header">Wed</div>
+                        <div class="day-header">Thu</div>
+                        <div class="day-header">Fri</div>
+                        <div class="day-header">Sat</div>
+                        
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell">1</div>
+                        <div class="day-cell">2</div>
+                        <div class="day-cell">3</div>
+                        <div class="day-cell">4</div>
+                        
+                        <div class="day-cell">5</div>
+                        <div class="day-cell">6</div>
+                        <div class="day-cell">7</div>
+                        <div class="day-cell">8</div>
+                        <div class="day-cell">9</div>
+                        <div class="day-cell">10</div>
+                        <div class="day-cell">11</div>
+                        
+                        <div class="day-cell">12</div>
+                        <div class="day-cell">13</div>
+                        <div class="day-cell">14</div>
+                        <div class="day-cell">15</div>
+                        <div class="day-cell">16</div>
+                        <div class="day-cell">17</div>
+                        <div class="day-cell">18</div>
+                        
+                        <div class="day-cell">19</div>
+                        <div class="day-cell">20</div>
+                        <div class="day-cell">21</div>
+                        <div class="day-cell">22</div>
+                        <div class="day-cell">23</div>
+                        <div class="day-cell">24</div>
+                        <div class="day-cell">25</div>
+                        
+                        <div class="day-cell">26</div>
+                        <div class="day-cell">27</div>
+                        <div class="day-cell">28</div>
+                        <div class="day-cell">29</div>
+                        <div class="day-cell">30</div>
+                        <div class="day-cell">31</div>
+                        <div class="day-cell empty"></div>
+                    </div>
+                </div>
+                
+                <!-- August -->
+                <div class="month-card">
+                    <div class="month-header">August</div>
+                    <div class="month-days">
+                        <div class="day-header">Sun</div>
+                        <div class="day-header">Mon</div>
+                        <div class="day-header">Tue</div>
+                        <div class="day-header">Wed</div>
+                        <div class="day-header">Thu</div>
+                        <div class="day-header">Fri</div>
+                        <div class="day-header">Sat</div>
+                        
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell">1</div>
+                        <div class="day-cell">2</div>
+                        
+                        <div class="day-cell">3</div>
+                        <div class="day-cell">4</div>
+                        <div class="day-cell">5</div>
+                        <div class="day-cell">6</div>
+                        <div class="day-cell">7</div>
+                        <div class="day-cell">8</div>
+                        <div class="day-cell">9</div>
+                        
+                        <div class="day-cell">10</div>
+                        <div class="day-cell">11</div>
+                        <div class="day-cell">12</div>
+                        <div class="day-cell">13</div>
+                        <div class="day-cell">14</div>
+                        <div class="day-cell">15</div>
+                        <div class="day-cell">16</div>
+                        
+                        <div class="day-cell">17</div>
+                        <div class="day-cell">18</div>
+                        <div class="day-cell">19</div>
+                        <div class="day-cell">20</div>
+                        <div class="day-cell">21</div>
+                        <div class="day-cell">22</div>
+                        <div class="day-cell">23</div>
+                        
+                        <div class="day-cell">24</div>
+                        <div class="day-cell">25</div>
+                        <div class="day-cell">26</div>
+                        <div class="day-cell">27</div>
+                        <div class="day-cell">28</div>
+                        <div class="day-cell">29</div>
+                        <div class="day-cell">30</div>
+                        
+                        <div class="day-cell">31</div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                    </div>
+                </div>
+                
+                <!-- September -->
+                <div class="month-card">
+                    <div class="month-header">September</div>
+                    <div class="month-days">
+                        <div class="day-header">Sun</div>
+                        <div class="day-header">Mon</div>
+                        <div class="day-header">Tue</div>
+                        <div class="day-header">Wed</div>
+                        <div class="day-header">Thu</div>
+                        <div class="day-header">Fri</div>
+                        <div class="day-header">Sat</div>
+                        
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell">1</div>
+                        <div class="day-cell">2</div>
+                        <div class="day-cell">3</div>
+                        <div class="day-cell">4</div>
+                        <div class="day-cell">5</div>
+                        
+                        <div class="day-cell">6</div>
+                        <div class="day-cell">7</div>
+                        <div class="day-cell">8</div>
+                        <div class="day-cell">9</div>
+                        <div class="day-cell">10</div>
+                        <div class="day-cell">11</div>
+                        <div class="day-cell">12</div>
+                        
+                        <div class="day-cell">13</div>
+                        <div class="day-cell">14</div>
+                        <div class="day-cell">15</div>
+                        <div class="day-cell">16</div>
+                        <div class="day-cell">17</div>
+                        <div class="day-cell">18</div>
+                        <div class="day-cell">19</div>
+                        
+                        <div class="day-cell">20</div>
+                        <div class="day-cell">21</div>
+                        <div class="day-cell">22</div>
+                        <div class="day-cell">23</div>
+                        <div class="day-cell">24</div>
+                        <div class="day-cell">25</div>
+                        <div class="day-cell">26</div>
+                        
+                        <div class="day-cell">27</div>
+                        <div class="day-cell">28</div>
+                        <div class="day-cell">29</div>
+                        <div class="day-cell">30</div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                    </div>
+                </div>
+                
+                <!-- October -->
+                <div class="month-card">
+                    <div class="month-header">October</div>
+                    <div class="month-days">
+                        <div class="day-header">Sun</div>
+                        <div class="day-header">Mon</div>
+                        <div class="day-header">Tue</div>
+                        <div class="day-header">Wed</div>
+                        <div class="day-header">Thu</div>
+                        <div class="day-header">Fri</div>
+                        <div class="day-header">Sat</div>
+                        
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell empty"></div>
+                        <div class="day-cell">1</div>
+                        <div class="day-cell">2</div>
+                        <div class="day-cell">3</div>
+                        
+                        <div class="day-cell">4</div>
+                        <div class="day-cell">5</div>
+                        <div class="day-cell">6</div>
+                        <div class="day-cell">7</div>
+                        <div class="day-cell">8</div>
+                        <div class="day-cell">9</div>
+                        <div class="day-cell">10</div>
+                        
+                        <div class="day-cell">11</div>
+                        <div class="day-cell">12</div>
+                        <div class="day-cell">13</div>
+                        <div class="day-cell">14</div>
+                        <div class
